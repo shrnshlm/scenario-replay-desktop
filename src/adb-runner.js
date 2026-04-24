@@ -59,7 +59,11 @@ function _run(args, timeoutMs = 8_000) {
 async function listDevices() {
   let stdout;
   try { stdout = await _run(['devices', '-l']); }
-  catch (_) { return []; }
+  catch (err) {
+    // Propagate "not found" so callers can surface a helpful message
+    if (err.code === 'ENOENT' || /not found|no such file/i.test(err.message)) throw err;
+    return [];
+  }
 
   const devices = [];
   for (const line of stdout.split('\n').slice(1)) {

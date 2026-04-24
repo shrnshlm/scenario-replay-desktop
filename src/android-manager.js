@@ -52,6 +52,7 @@ class AndroidManager extends EventEmitter {
     this._watcherTimer = null;
     this._appiumProc = null;
     this._setupCancelled = false;
+    this._adbMissingLogged = false;
   }
 
   // ── Local Appium path helpers ──────────────────────────────────────────────
@@ -157,8 +158,21 @@ class AndroidManager extends EventEmitter {
 
   async _pollDevices() {
     let devices;
-    try { devices = await adb.listDevices(); }
-    catch (_) { devices = []; }
+    try {
+      devices = await adb.listDevices();
+      this._adbMissingLogged = false; // reset if adb comes back
+    } catch (err) {
+      if (!this._adbMissingLogged) {
+        this._adbMissingLogged = true;
+        const hint = process.platform === 'darwin'
+          ? 'Install Android Studio, or run: brew install android-platform-tools'
+          : process.platform === 'win32'
+          ? 'Install Android Studio and ensure platform-tools are in your PATH.'
+          : 'Run: sudo apt install adb  (or equivalent for your distro)';
+        this._log('warn', 'android', `ADB not found — Android device detection disabled. ${hint}`);
+      }
+      devices = [];
+    }
 
     const first = devices[0] ?? null;
 

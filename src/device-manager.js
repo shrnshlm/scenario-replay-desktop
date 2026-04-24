@@ -277,7 +277,7 @@ class DeviceManager extends EventEmitter {
         this._log('info', 'device', 'Port forward already running — reusing existing forward');
         return;
       }
-      if (SUPPRESS.some(s => line.toLowerCase().includes(s)) && !line.includes('Start listening')) return;
+      if (SUPPRESS.some(s => line.toLowerCase().includes(s.toLowerCase())) && !line.includes('Start listening')) return;
       this._log('info', 'device', line);
     });
   }

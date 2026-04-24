@@ -3,6 +3,20 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 
+// ── Single-instance lock ──────────────────────────────────────────────────
+// If another instance tries to start, focus the existing window instead.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+  process.exit(0);
+}
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 // ── Services ──────────────────────────────────────────────────────────────
 const ProxyServer = require('./src/proxy-server');
 const { DeviceManager } = require('./src/device-manager');

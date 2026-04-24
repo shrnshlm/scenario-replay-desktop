@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Notification, dialog } = require('electron');
 const path = require('path');
 
 // ── Single-instance lock ──────────────────────────────────────────────────
@@ -11,6 +11,15 @@ if (!gotLock) {
   process.exit(0);
 }
 app.on('second-instance', () => {
+  // Show a notification so the user knows why nothing new opened
+  if (Notification.isSupported()) {
+    new Notification({
+      title: 'ScenarioReplay is already running',
+      body: 'Bringing the existing window to focus.',
+      silent: true,
+    }).show();
+  }
+  // Bring the existing window to front
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();

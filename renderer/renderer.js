@@ -10,12 +10,20 @@ const detailDevice = document.getElementById('detail-device');
 const dotWda       = document.getElementById('dot-wda');
 const detailWda    = document.getElementById('detail-wda');
 
-const errorBanner  = document.getElementById('error-banner');
-const errorText    = document.getElementById('error-text');
+const dotAndroidDevice    = document.getElementById('dot-android-device');
+const detailAndroidDevice = document.getElementById('detail-android-device');
+const dotAppium           = document.getElementById('dot-appium');
+const detailAppium        = document.getElementById('detail-appium');
 
-const btnConnect     = document.getElementById('btn-connect');
-const btnDisconnect  = document.getElementById('btn-disconnect');
-const btnStartWda    = document.getElementById('btn-start-wda');
+const errorBanner        = document.getElementById('error-banner');
+const errorText          = document.getElementById('error-text');
+const androidErrorBanner = document.getElementById('android-error-banner');
+const androidErrorText   = document.getElementById('android-error-text');
+
+const btnConnect        = document.getElementById('btn-connect');
+const btnDisconnect     = document.getElementById('btn-disconnect');
+const btnStartWda       = document.getElementById('btn-start-wda');
+const btnInstallAppium  = document.getElementById('btn-install-appium');
 
 const requestCount   = document.getElementById('request-count');
 const logBody        = document.getElementById('log-body');
@@ -45,6 +53,7 @@ window.electronAPI.onStateUpdate((state) => {
   updateProxy(state);
   updateDevice(state);
   updateWda(state);
+  updateAndroid(state);
   updateButtons(state);
   updateErrorBanner(state);
   requestCount.textContent = state.requestCount > 0
@@ -79,12 +88,6 @@ function updateDevice(state) {
   }
 }
 
-const STATUS_COLORS = {
-  'Connected': 'green',
-  'Error':     'red',
-  'No device connected': 'gray',
-};
-
 function wdaStatusColor(status) {
   if (status === 'Connected') return 'green';
   if (status === 'Error') return 'red';
@@ -97,14 +100,44 @@ function updateWda(state) {
   detailWda.textContent = state.wdaStatus;
 }
 
-function updateButtons(state) {
-  const { device, wdaStatus } = state;
+function androidStatusColor(status) {
+  if (status === 'Connected') return 'green';
+  if (status === 'Error') return 'red';
+  if (status === 'No Android device' || status === 'Android device detected') return 'gray';
+  return 'orange'; // transitional: checking, launching
+}
 
-  // Connect: shown when device detected but not yet connecting
+function updateAndroid(state) {
+  const { androidDevice, androidStatus, androidError } = state;
+
+  if (androidDevice) {
+    setDot(dotAndroidDevice, 'green');
+    const ver = androidDevice.osVersion ? ` (Android ${androidDevice.osVersion})` : '';
+    detailAndroidDevice.textContent = `${androidDevice.deviceName}${ver}`;
+  } else {
+    setDot(dotAndroidDevice, 'gray');
+    detailAndroidDevice.textContent = 'No device connected';
+  }
+
+  setDot(dotAppium, androidStatusColor(androidStatus));
+  detailAppium.textContent = androidStatus || 'No Android device';
+
+  if (androidError) {
+    androidErrorText.textContent = androidError;
+    androidErrorBanner.classList.add('visible');
+  } else {
+    androidErrorBanner.classList.remove('visible');
+  }
+}
+
+function updateButtons(state) {
+  const { device, wdaStatus, androidStatus } = state;
+
+  // Connect: shown when iOS device detected but not yet connecting
   const showConnect = device && wdaStatus === 'Device detected';
   btnConnect.style.display = showConnect ? '' : 'none';
 
-  // Disconnect: shown when setup is running or finished
+  // Disconnect: shown when iOS setup is running or finished
   const showDisconnect = wdaStatus === 'Connected' || wdaStatus === 'Error';
   btnDisconnect.style.display = showDisconnect ? '' : 'none';
 
@@ -114,6 +147,11 @@ function updateButtons(state) {
   if (platform === 'darwin') {
     btnStartWda.style.display = showStartWda ? '' : 'none';
   }
+
+  // Install Appium: shown when Appium is missing; re-enabled if install errored
+  const showInstall = androidStatus === 'Appium not installed';
+  btnInstallAppium.style.display = showInstall ? '' : 'none';
+  if (showInstall) btnInstallAppium.disabled = false; // re-enable for retry after error
 }
 
 function updateErrorBanner(state) {
@@ -126,13 +164,29 @@ function updateErrorBanner(state) {
 }
 
 // ── Button handlers ───────────────────────────────────────────────────────
-btnConnect.onclick    = () => window.electronAPI.connect();
-btnDisconnect.onclick = () => window.electronAPI.disconnect();
-btnStartWda.onclick   = () => window.electronAPI.startWDAXcodebuild();
+btnConnect.onclick       = () => window.electronAPI.connect();
+btnDisconnect.onclick    = () => window.electronAPI.disconnect();
+btnStartWda.onclick      = () => window.electronAPI.startWDAXcodebuild();
+btnInstallAppium.onclick = () => {
+  btnInstallAppium.disabled = true;
+  window.electronAPI.installAppium();
+};
 
 // ── Log ───────────────────────────────────────────────────────────────────
-const SOURCE_CLASS = { proxy: 'src-proxy', device: 'src-device', wda: 'src-wda', app: 'src-app' };
-const SOURCE_LABEL = { proxy: '[PROXY]', device: '[DEVICE]', wda: '[WDA]', app: '[APP]' };
+const SOURCE_CLASS = {
+  proxy:   'src-proxy',
+  device:  'src-device',
+  wda:     'src-wda',
+  android: 'src-android',
+  app:     'src-app',
+};
+const SOURCE_LABEL = {
+  proxy:   '[PROXY]',
+  device:  '[DEVICE]',
+  wda:     '[WDA]',
+  android: '[ANDROID]',
+  app:     '[APP]',
+};
 
 function formatTime(date) {
   const d = date instanceof Date ? date : new Date(date);

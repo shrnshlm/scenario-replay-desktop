@@ -12,6 +12,8 @@
   <div class="status-panel">
     <div class="status-panel-title">&#x1F4F6; Status</div>
 
+    <div class="status-section-label">iOS</div>
+
     <div class="status-row">
       <div class="status-dot" id="dot-proxy"></div>
       <span class="status-label">Proxy Server</span>
@@ -29,20 +31,41 @@
       <span class="status-label">WebDriverAgent</span>
       <span class="status-detail" id="detail-wda">No device connected</span>
     </div>
+
+    <div class="status-section-label" style="margin-top:4px">Android</div>
+
+    <div class="status-row">
+      <div class="status-dot" id="dot-android-device"></div>
+      <span class="status-label">Device</span>
+      <span class="status-detail" id="detail-android-device">No device connected</span>
+    </div>
+
+    <div class="status-row">
+      <div class="status-dot" id="dot-appium"></div>
+      <span class="status-label">Appium</span>
+      <span class="status-detail" id="detail-appium">No device connected</span>
+    </div>
   </div>
 
-  <!-- Error banner -->
+  <!-- iOS error banner -->
   <div class="error-banner" id="error-banner">
     <span class="error-banner-icon">&#x26A0;&#xFE0F;</span>
     <span id="error-text"></span>
   </div>
 
+  <!-- Android error banner -->
+  <div class="error-banner" id="android-error-banner">
+    <span class="error-banner-icon">&#x26A0;&#xFE0F;</span>
+    <span id="android-error-text"></span>
+  </div>
+
   <!-- Action row -->
   <div class="action-row">
-    <button id="btn-connect"     class="primary" style="display:none">Connect</button>
-    <button id="btn-disconnect"  class="danger"  style="display:none">Disconnect</button>
-    <button id="btn-start-wda"   class="primary" style="display:none">Start WDA</button>
-    <button id="btn-settings"    class="small"   onclick="window.electronAPI.openSettings()">Settings</button>
+    <button id="btn-connect"          class="primary" style="display:none">Connect</button>
+    <button id="btn-disconnect"       class="danger"  style="display:none">Disconnect</button>
+    <button id="btn-start-wda"        class="primary" style="display:none">Start WDA</button>
+    <button id="btn-install-appium"   class="primary" style="display:none">Install Appium</button>
+    <button id="btn-settings"         class="small"   onclick="window.electronAPI.openSettings()">Settings</button>
     <div class="spacer"></div>
     <span class="request-count" id="request-count"></span>
   </div>

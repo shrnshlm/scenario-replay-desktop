@@ -29,12 +29,14 @@ app.on('second-instance', () => {
 // ── Services ──────────────────────────────────────────────────────────────
 const ProxyServer = require('./src/proxy-server');
 const { DeviceManager } = require('./src/device-manager');
+const { AndroidManager } = require('./src/android-manager');
 const goios = require('./src/goios-runner');
 const store = require('./src/settings-store');
 
 // ── State ─────────────────────────────────────────────────────────────────
-const proxyServer   = new ProxyServer();
-const deviceManager = new DeviceManager();
+const proxyServer    = new ProxyServer();
+const deviceManager  = new DeviceManager();
+const androidManager = new AndroidManager();
 const logBuffer     = []; // up to 500 entries, replayed when window opens
 const MAX_LOG       = 500;
 
@@ -61,6 +63,8 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   deviceManager.stopMonitoring();
   deviceManager.disconnect();
+  androidManager.stopMonitoring();
+  androidManager.disconnect();
   proxyServer.stop();
 });
 
@@ -68,9 +72,9 @@ app.on('before-quit', () => {
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 520,
-    height: 600,
+    height: 680,
     minWidth: 480,
-    minHeight: 520,
+    minHeight: 600,
     title: 'ScenarioReplay',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -138,9 +142,13 @@ function wireEvents() {
   proxyServer.on('started', () => sendState());
   proxyServer.on('stopped', () => sendState());
 
-  // Device manager → buffer + forward to renderer
+  // Device manager (iOS) → buffer + forward to renderer
   deviceManager.on('log', (entry) => pushLog(entry));
   deviceManager.on('state-changed', () => sendState());
+
+  // Android manager → buffer + forward to renderer
+  androidManager.on('log', (entry) => pushLog(entry));
+  androidManager.on('state-changed', () => sendState());
 }
 
 function pushLog(entry) {
@@ -156,12 +164,15 @@ function sendState() {
 
 function getState() {
   return {
-    proxyRunning:  proxyServer.isRunning,
-    proxyPort:     proxyServer.port,
-    requestCount:  proxyServer.requestCount,
-    device:        deviceManager.connectedDevice,
-    wdaStatus:     deviceManager.wdaStatus,
-    errorMessage:  deviceManager.errorMessage,
+    proxyRunning:    proxyServer.isRunning,
+    proxyPort:       proxyServer.port,
+    requestCount:    proxyServer.requestCount,
+    device:          deviceManager.connectedDevice,
+    wdaStatus:       deviceManager.wdaStatus,
+    errorMessage:    deviceManager.errorMessage,
+    androidDevice:   androidManager.connectedDevice,
+    androidStatus:   androidManager.status,
+    androidError:    androidManager.errorMessage,
   };
 }
 
@@ -170,6 +181,7 @@ function startServices() {
   const port = store.get('proxyPort', 4723);
   proxyServer.start(port);
   deviceManager.startMonitoring();
+  androidManager.startMonitoring();
 }
 
 // ── IPC handlers ──────────────────────────────────────────────────────────
@@ -184,6 +196,8 @@ ipcMain.handle('connect', () => {
 ipcMain.handle('disconnect', () => deviceManager.disconnect());
 
 ipcMain.handle('start-wda-xcodebuild', () => deviceManager.startWDAViaXcodebuild());
+
+ipcMain.handle('install-appium', () => androidManager.installAppium());
 
 ipcMain.handle('get-settings', () => ({
   proxyPort:      store.get('proxyPort', 4723),

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   connect: () => ipcRenderer.invoke('connect'),
   disconnect: () => ipcRenderer.invoke('disconnect'),
   startWDAXcodebuild: () => ipcRenderer.invoke('start-wda-xcodebuild'),
+  installAppium: () => ipcRenderer.invoke('install-appium'),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('get-settings'),

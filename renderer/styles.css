@@ -58,6 +58,16 @@ body {
   margin-bottom: 2px;
 }
 
+.status-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
 .status-row {
   display: flex;
   align-items: center;
@@ -194,10 +204,11 @@ button.small { padding: 3px 10px; font-size: 11px; }
 .log-msg   { color: var(--text); }
 .log-msg.error { color: var(--red); }
 
-.src-proxy  { color: var(--blue); }
-.src-device { color: var(--green); }
-.src-wda    { color: var(--orange); }
-.src-app    { color: var(--gray); }
+.src-proxy   { color: var(--blue); }
+.src-device  { color: var(--green); }
+.src-wda     { color: var(--orange); }
+.src-android { color: #3ddc84; }
+.src-app     { color: var(--gray); }
 
 /* copied toast */
 .copied-toast {

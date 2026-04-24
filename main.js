@@ -80,6 +80,17 @@ function createMainWindow() {
   });
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
+  // Push initial state once the renderer is ready
+  mainWindow.webContents.on('did-finish-load', () => sendState());
+
+  // Log renderer errors to main process console for debugging
+  mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
+    console.error('[main] Renderer failed to load:', code, desc);
+  });
+  mainWindow.webContents.on('render-process-gone', (_, details) => {
+    console.error('[main] Renderer process gone:', details.reason);
+  });
+
   // Remove the default menu (or set a minimal one)
   const menu = Menu.buildFromTemplate([
     {

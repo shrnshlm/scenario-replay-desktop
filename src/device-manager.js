@@ -267,7 +267,10 @@ class DeviceManager extends EventEmitter {
   // ── Port forward ──────────────────────────────────────────────────────
 
   _startPortForward(udid) {
-    const SUPPRESS = ['new client connected', 'could not connect to phone', 'error code:3'];
+    const SUPPRESS = [
+      'new client connected', 'could not connect to phone', 'error code:3',
+      'forward: close clientConn', '"Connected to port"', '"msg":"Connected to port"',
+    ];
 
     this._forwardProc = goios.startPortForward(udid, (line) => {
       if (line.includes('address already in use')) {

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScenarioReplay</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Status panel -->
+  <div class="status-panel">
+    <div class="status-panel-title">&#x1F4F6; Status</div>
+
+    <div class="status-row">
+      <div class="status-dot" id="dot-proxy"></div>
+      <span class="status-label">Proxy Server</span>
+      <span class="status-detail" id="detail-proxy">Starting...</span>
+    </div>
+
+    <div class="status-row">
+      <div class="status-dot" id="dot-device"></div>
+      <span class="status-label">Device</span>
+      <span class="status-detail" id="detail-device">No device connected</span>
+    </div>
+
+    <div class="status-row">
+      <div class="status-dot" id="dot-wda"></div>
+      <span class="status-label">WebDriverAgent</span>
+      <span class="status-detail" id="detail-wda">No device connected</span>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div class="error-banner" id="error-banner">
+    <span class="error-banner-icon">&#x26A0;&#xFE0F;</span>
+    <span id="error-text"></span>
+  </div>
+
+  <!-- Action row -->
+  <div class="action-row">
+    <button id="btn-connect"     class="primary" style="display:none">Connect</button>
+    <button id="btn-disconnect"  class="danger"  style="display:none">Disconnect</button>
+    <button id="btn-start-wda"   class="primary" style="display:none">Start WDA</button>
+    <button id="btn-settings"    class="small"   onclick="window.electronAPI.openSettings()">Settings</button>
+    <div class="spacer"></div>
+    <span class="request-count" id="request-count"></span>
+  </div>
+
+  <!-- Activity log -->
+  <div class="log-section">
+    <div class="log-header">
+      <span class="log-title">Activity Log</span>
+      <button class="small" id="btn-copy-log">Copy Log</button>
+      <span class="copied-toast" id="copied-toast">Copied!</span>
+    </div>
+    <div class="log-body" id="log-body"></div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

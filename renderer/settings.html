@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings — ScenarioReplay</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #007aff; --red: #ff3b30; --border: #d1d1d6;
+      --bg: #f5f5f7; --surface: #ffffff; --text: #1c1c1e; --text2: #48484a; --text3: #8e8e93;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1c1c1e; --surface: #2c2c2e; --border: #38383a; --text: #f2f2f7; --text2: #aeaeb2; --text3: #636366; }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; background: var(--bg); color: var(--text); padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    h2 { font-size: 14px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    label { font-size: 12px; font-weight: 500; color: var(--text2); }
+    input[type="text"], input[type="number"] {
+      font-family: inherit; font-size: 13px; padding: 5px 8px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg); color: var(--text); outline: none;
+    }
+    input:focus { border-color: var(--blue); }
+    .footer-note { font-size: 11px; color: var(--text3); line-height: 1.4; }
+    .error-msg { font-size: 11px; color: var(--red); }
+    .actions { display: flex; justify-content: flex-end; gap: 8px; }
+    button { font-family: inherit; font-size: 13px; padding: 5px 14px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+    button.primary { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+    button:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+
+  <div class="section">
+    <h2>Proxy Server</h2>
+    <div class="field">
+      <label for="proxy-port">Port</label>
+      <input type="number" id="proxy-port" min="1025" max="65535" />
+      <span class="error-msg" id="port-error" style="display:none">Port must be between 1025 and 65535</span>
+      <span class="footer-note" id="port-url"></span>
+      <span class="footer-note">Restart ScenarioReplay after changing the port.</span>
+    </div>
+  </div>
+
+  <div class="section" id="wda-section">
+    <h2>WebDriverAgent</h2>
+    <div class="field">
+      <label for="wda-path">Project path</label>
+      <input type="text" id="wda-path" placeholder="~/Downloads/WebDriverAgent" />
+      <span class="footer-note">Path to the WebDriverAgent Xcode project. Leave empty to use ~/Downloads/WebDriverAgent.</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button onclick="window.close()">Cancel</button>
+    <button class="primary" id="btn-save">Save</button>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

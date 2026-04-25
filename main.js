@@ -153,6 +153,18 @@ function wireEvents() {
   // Device manager (iOS) → buffer + forward to renderer
   deviceManager.on('log', (entry) => pushLog(entry));
   deviceManager.on('state-changed', () => sendState());
+  // Pairing prompt: show a system notification AND focus the window so the
+  // user actually notices we're waiting on them to tap Trust on the phone.
+  deviceManager.on('user-action-required', ({ title, body }) => {
+    if (Notification.isSupported()) {
+      new Notification({ title, body }).show();
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
 
   // Android manager → buffer + forward to renderer
   androidManager.on('log', (entry) => pushLog(entry));

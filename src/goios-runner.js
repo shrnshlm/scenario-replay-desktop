@@ -120,6 +120,28 @@ class GoIOSRunner {
     });
   }
 
+  /**
+   * Run `ios pair --udid=...`. Triggers the Trust dialog on the device
+   * and blocks until the user taps Trust or the timeout fires.
+   * Resolves on success, rejects on failure (timeout / declined / no device).
+   */
+  pair(udid, timeoutMs = 60_000) {
+    return new Promise((resolve, reject) => {
+      execFile(
+        this._binaryPath,
+        ['pair', `--udid=${udid}`],
+        { env: this._baseEnv(), cwd: this._workDir, timeout: timeoutMs },
+        (err, stdout, stderr) => {
+          if (err) {
+            reject(new Error((stderr && stderr.trim()) || err.message));
+          } else {
+            resolve(stdout);
+          }
+        },
+      );
+    });
+  }
+
   installWDA(udid, ipaPath) {
     return new Promise((resolve, reject) => {
       execFile(

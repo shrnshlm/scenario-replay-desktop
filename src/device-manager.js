@@ -29,6 +29,7 @@ const WDA_WATCHER_MS   = 5_000;
 const WDAStatus = {
   IDLE:       'No device connected',
   DETECTED:   'Device detected',
+  PAIRING:    'Pairing — tap Trust on the iPhone',
   TUNNELING:  'Starting iOS tunnel...',
   INSTALLING: 'Installing WebDriverAgent...',
   FORWARDING: 'Starting port forward...',
@@ -124,6 +125,27 @@ class DeviceManager extends EventEmitter {
     this.connectedDevice = device;
     this.errorMessage = null;
 
+    // Step 0: Ensure the device is paired with this PC. If it isn't, the
+    // tunnel + WDA stages will fail with "ReadPair failed errorcode 2".
+    // The osVersion === 'Unknown' fallback in goios.listDevices is a
+    // reliable signal that fetchDeviceInfo failed — usually because the
+    // pair record doesn't exist on this host.
+    if (!device.osVersion || device.osVersion === 'Unknown') {
+      const paired = await this._ensurePaired(device.id);
+      if (this._setupCancelled) return;
+      if (!paired) {
+        this._setError('Pairing was not completed. Unlock the iPhone and tap Trust, then unplug and replug.');
+        return;
+      }
+      // Refresh device info now that pairing succeeded
+      try {
+        const info = await goios.fetchDeviceInfo(device.id);
+        this.connectedDevice = info;
+        this._log('info', 'device', `Paired: ${info.deviceName} (iOS ${info.osVersion})`);
+        this._emit();
+      } catch (_) {}
+    }
+
     // Step 1: Tunnel
     this._setState(WDAStatus.TUNNELING);
     const tunnelOk = await this._startTunnelWithRetry(device.id);
@@ -193,6 +215,32 @@ class DeviceManager extends EventEmitter {
     if (!this._setupCancelled) {
       this._setError('WebDriverAgent did not respond within 60 seconds');
       this._startWDAWatcher();
+    }
+  }
+
+  // ── Pairing ───────────────────────────────────────────────────────────
+
+  /**
+   * Run `ios pair`. Triggers the Trust dialog on the iPhone and blocks
+   * until the user taps Trust. We surface a system notification + log
+   * + state change so the user knows to look at their phone.
+   * Returns true on success, false on timeout / decline / error.
+   */
+  async _ensurePaired(udid) {
+    this._setState(WDAStatus.PAIRING);
+    this._log('info', 'device', 'Pairing iPhone — tap Trust on the device when prompted');
+    this.emit('user-action-required', {
+      title: 'Tap Trust on your iPhone',
+      body: 'ScenarioReplay is pairing with this device. Unlock the iPhone and tap Trust when prompted.',
+    });
+
+    try {
+      await goios.pair(udid);
+      this._log('info', 'device', 'Pairing succeeded');
+      return true;
+    } catch (err) {
+      this._log('error', 'device', `Pairing failed: ${err.message}`);
+      return false;
     }
   }
 

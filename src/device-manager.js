@@ -196,7 +196,18 @@ class DeviceManager extends EventEmitter {
 
     // Step 5: Launch WDA
     this._setState(WDAStatus.LAUNCHING);
-    this._wdaProc = goios.startWDA(device.id, (line) => {
+    // Auto-detect the WDA bundle id so self-signed builds (com.<team>.WDA…)
+    // work without requiring the user to edit settings.
+    const wdaBundleId = await goios.findWDABundleId(device.id);
+    if (!wdaBundleId) {
+      this._setError(
+        'WebDriverAgent is not installed on this iPhone. ' +
+        'Build and sign WDA on a Mac, drop the .ipa at resources/WebDriverAgent.ipa, and restart.',
+      );
+      return;
+    }
+    this._log('info', 'device', `Launching WDA: ${wdaBundleId}`);
+    this._wdaProc = goios.startWDA(device.id, wdaBundleId, (line) => {
       this._log('info', 'wda', line);
     });
 

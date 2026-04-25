@@ -121,6 +121,60 @@ class GoIOSRunner {
   }
 
   /**
+   * List all installed user apps on the device. Returns an array of
+   * { bundleId, name } objects, sorted by bundleId.
+   *
+   * Used to auto-detect the WDA bundle ID — it's almost never
+   * com.facebook.WebDriverAgentRunner.xctrunner in practice (you have to
+   * re-sign WDA with your own Apple Developer team prefix to install it
+   * on a real device, e.g. com.<team>.WebDriverAgentRunner.xctrunner).
+   */
+  listApps(udid) {
+    return new Promise((resolve, reject) => {
+      // `ios apps --udid=X` produces a giant JSON dump (one object per app).
+      // We bump maxBuffer to avoid truncation on devices with hundreds of apps.
+      execFile(
+        this._binaryPath,
+        ['apps', `--udid=${udid}`],
+        { env: this._baseEnv(), cwd: this._workDir, timeout: 30_000, maxBuffer: 64 * 1024 * 1024 },
+        (err, stdout) => {
+          if (err) { reject(err); return; }
+          try {
+            // Output format: a JSON array of app dicts. Each has CFBundleIdentifier
+            // and either CFBundleDisplayName or CFBundleName.
+            const arr = JSON.parse(stdout.trim());
+            const apps = (Array.isArray(arr) ? arr : []).map(a => ({
+              bundleId: a.CFBundleIdentifier ?? '',
+              name: a.CFBundleDisplayName ?? a.CFBundleName ?? '',
+            })).filter(a => a.bundleId);
+            apps.sort((a, b) => a.bundleId.localeCompare(b.bundleId));
+            resolve(apps);
+          } catch (e) {
+            reject(new Error(`Failed to parse app list: ${e.message}`));
+          }
+        },
+      );
+    });
+  }
+
+  /**
+   * Find the bundle ID of the WebDriverAgentRunner installed on this device.
+   * Matches any bundle ID ending in `.WebDriverAgentRunner.xctrunner`, so it
+   * works whether WDA was signed with com.facebook.* (Apple's example) or
+   * com.<your-team>.* (the typical case for self-built WDA).
+   * Returns null if no WDA is installed.
+   */
+  async findWDABundleId(udid) {
+    try {
+      const apps = await this.listApps(udid);
+      const match = apps.find(a => /\.WebDriverAgentRunner\.xctrunner$/.test(a.bundleId));
+      return match ? match.bundleId : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Run `ios pair --udid=...`. Triggers the Trust dialog on the device
    * and blocks until the user taps Trust or the timeout fires.
    * Resolves on success, rejects on failure (timeout / declined / no device).
@@ -192,11 +246,25 @@ class GoIOSRunner {
     return this._launch(['forward', '8100', '8100', `--udid=${udid}`], onOutput);
   }
 
-  startWDA(udid, onOutput) {
+  /**
+   * Launch WebDriverAgent on the device.
+   * @param {string} udid
+   * @param {string} bundleId - the WDA xctrunner bundle id (e.g.
+   *   com.facebook.WebDriverAgentRunner.xctrunner or
+   *   com.<team>.WebDriverAgentRunner.xctrunner). Pass the value returned
+   *   by findWDABundleId(udid) so it works with self-signed builds too.
+   */
+  startWDA(udid, bundleId, onOutput) {
+    // Back-compat: if called as startWDA(udid, onOutput), fall back to the
+    // hardcoded Facebook id so older callers still work.
+    if (typeof bundleId === 'function' && onOutput === undefined) {
+      onOutput = bundleId;
+      bundleId = WDA_XCTRUNNER_ID;
+    }
     return this._launch([
       'runwda',
-      `--bundleid=${WDA_XCTRUNNER_ID}`,
-      `--testrunnerbundleid=${WDA_XCTRUNNER_ID}`,
+      `--bundleid=${bundleId}`,
+      `--testrunnerbundleid=${bundleId}`,
       `--xctestconfig=${WDA_XCTEST_CONFIG}`,
       `--udid=${udid}`,
     ], onOutput);

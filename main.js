@@ -43,9 +43,18 @@ const MAX_LOG       = 500;
 let mainWindow    = null;
 let settingsWindow = null;
 
+// Sync the OS login-item state with the saved preference.
+// Safe to call repeatedly; setLoginItemSettings is idempotent.
+function applyLaunchOnStartup() {
+  if (process.platform === 'linux') return; // unsupported by Electron API
+  const enabled = store.get('launchOnStartup', true);
+  app.setLoginItemSettings({ openAtLogin: enabled });
+}
+
 // ── App init ──────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   goios.init();
+  applyLaunchOnStartup();
   createMainWindow();
   wireEvents();
   startServices();
@@ -200,13 +209,18 @@ ipcMain.handle('start-wda-xcodebuild', () => deviceManager.startWDAViaXcodebuild
 ipcMain.handle('install-appium', () => androidManager.installAppium());
 
 ipcMain.handle('get-settings', () => ({
-  proxyPort:      store.get('proxyPort', 4723),
-  wdaProjectPath: store.get('wdaProjectPath', ''),
+  proxyPort:        store.get('proxyPort', 4723),
+  wdaProjectPath:   store.get('wdaProjectPath', ''),
+  launchOnStartup:  store.get('launchOnStartup', true),
 }));
 
 ipcMain.handle('save-settings', (_, settings) => {
-  if (settings.proxyPort)      store.set('proxyPort', settings.proxyPort);
+  if (settings.proxyPort) store.set('proxyPort', settings.proxyPort);
   if (settings.wdaProjectPath !== undefined) store.set('wdaProjectPath', settings.wdaProjectPath);
+  if (settings.launchOnStartup !== undefined) {
+    store.set('launchOnStartup', settings.launchOnStartup);
+    applyLaunchOnStartup();
+  }
 });
 
 ipcMain.handle('open-settings', () => openSettingsWindow());

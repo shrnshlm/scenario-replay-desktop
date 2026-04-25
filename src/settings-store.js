@@ -13,6 +13,7 @@ function getStore() {
       defaults: {
         proxyPort: 4723,
         wdaProjectPath: '',
+        launchOnStartup: true,
       },
     });
   }

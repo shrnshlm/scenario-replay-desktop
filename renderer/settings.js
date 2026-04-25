@@ -5,6 +5,7 @@ const portError   = document.getElementById('port-error');
 const portUrl     = document.getElementById('port-url');
 const wdaPath     = document.getElementById('wda-path');
 const wdaSection  = document.getElementById('wda-section');
+const launchOnStartup = document.getElementById('launch-on-startup');
 const btnSave     = document.getElementById('btn-save');
 
 (async () => {
@@ -13,9 +14,10 @@ const btnSave     = document.getElementById('btn-save');
     window.electronAPI.getPlatform(),
   ]);
 
-  portInput.value = settings.proxyPort;
-  wdaPath.value   = settings.wdaProjectPath || '';
-  portUrl.textContent = `Chrome extension cluster URL: http://localhost:${settings.proxyPort}`;
+  portInput.value         = settings.proxyPort;
+  wdaPath.value           = settings.wdaProjectPath || '';
+  launchOnStartup.checked = settings.launchOnStartup !== false;
+  portUrl.textContent     = `Chrome extension cluster URL: http://localhost:${settings.proxyPort}`;
 
   // WDA path only relevant on macOS
   if (platform !== 'darwin') wdaSection.style.display = 'none';
@@ -36,6 +38,7 @@ btnSave.addEventListener('click', async () => {
   await window.electronAPI.saveSettings({
     proxyPort: p,
     wdaProjectPath: wdaPath.value.trim(),
+    launchOnStartup: launchOnStartup.checked,
   });
   window.close();
 });

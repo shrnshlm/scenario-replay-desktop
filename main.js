@@ -46,7 +46,6 @@ let settingsWindow = null;
 // Sync the OS login-item state with the saved preference.
 // Safe to call repeatedly; setLoginItemSettings is idempotent.
 function applyLaunchOnStartup() {
-  if (process.platform === 'linux') return; // unsupported by Electron API
   const enabled = store.get('launchOnStartup', true);
   app.setLoginItemSettings({ openAtLogin: enabled });
 }

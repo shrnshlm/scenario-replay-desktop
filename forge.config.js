@@ -2,6 +2,10 @@ module.exports = {
   packagerConfig: {
     name: 'ScenarioReplay',
     asar: true,
+    // Strip devDependencies from node_modules before packaging — without
+    // this, the Squirrel installer ships @electron-forge/* and friends
+    // (~50MB of dev tooling that runtime never touches).
+    prune: true,
     // Ship resources/<platform>/ios.exe and any other resources alongside the app
     extraResource: ['./resources'],
     // ignore dev-only files in the packaged build
@@ -11,6 +15,8 @@ module.exports = {
       /^\/\.gitignore$/,
       /^\/DEPLOYMENT\.md$/,
       /^\/forge\.config\.js$/,
+      /^\/selfIdentity\.plist$/,
+      /^\/\.claude($|\/)/,
     ],
   },
   rebuildConfig: {},

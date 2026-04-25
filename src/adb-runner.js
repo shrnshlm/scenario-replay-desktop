@@ -102,4 +102,16 @@ async function getDeviceInfo(serial) {
   };
 }
 
-module.exports = { listDevices, getDeviceInfo };
+/**
+ * Infer ANDROID_HOME / ANDROID_SDK_ROOT from the detected adb binary.
+ * adb.exe lives at <ANDROID_HOME>/platform-tools/adb(.exe), so the SDK
+ * root is the parent of platform-tools.
+ * Returns null if we're falling back to PATH (no known root).
+ */
+function getAndroidHome() {
+  if (adbBin === 'adb') return null; // on PATH only — unknown root
+  const platformTools = path.dirname(adbBin);
+  return path.dirname(platformTools);
+}
+
+module.exports = { listDevices, getDeviceInfo, getAndroidHome, adbBin };

@@ -234,9 +234,26 @@ class AndroidManager extends EventEmitter {
     this._setState(AndroidStatus.LAUNCHING);
     this._log('info', 'android', `Starting Appium on port ${APPIUM_PORT}...`);
 
+    // Appium needs ANDROID_HOME to locate adb / aapt / etc. Derive it from
+    // the adb binary we already detected so the user doesn't have to set
+    // system-wide env vars. Also prepend platform-tools to PATH so spawned
+    // tools can find adb.
+    const env = { ...process.env };
+    const androidHome = adb.getAndroidHome();
+    if (androidHome) {
+      env.ANDROID_HOME = env.ANDROID_HOME || androidHome;
+      env.ANDROID_SDK_ROOT = env.ANDROID_SDK_ROOT || androidHome;
+      const platformTools = path.join(androidHome, 'platform-tools');
+      const pathSep = process.platform === 'win32' ? ';' : ':';
+      if (env.PATH && !env.PATH.includes(platformTools)) {
+        env.PATH = `${platformTools}${pathSep}${env.PATH}`;
+      }
+    }
+
     const proc = spawn(appiumBin, ['--port', String(APPIUM_PORT), '--log-level', 'warn'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: process.platform === 'win32',
+      env,
     });
     proc.stdout?.on('data', (d) => {
       const text = d.toString().trim();
